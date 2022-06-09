@@ -1,21 +1,21 @@
 import inquirer from 'inquirer';
 import {
-  PrivateKey,
   Hbar,
-  HbarUnit,
+  AccountId,
+  PrivateKey,
   TransferTransaction,
-  TokenDeleteTransaction,
   TokenMintTransaction,
   TokenBurnTransaction,
+  TokenWipeTransaction,
+  TokenPauseTransaction,
+  TokenDeleteTransaction,
   TokenFreezeTransaction,
+  TokenUnpauseTransaction,
   TokenUnfreezeTransaction,
   TokenGrantKycTransaction,
   TokenRevokeKycTransaction,
   TokenAssociateTransaction,
-  TokenDissociateTransaction,
-  TokenPauseTransaction,
-  TokenUnpauseTransaction,
-  TokenWipeTransaction
+  TokenDissociateTransaction
 } from '@hashgraph/sdk';
 import axios from 'axios';
 import Secrets from '../../helpers/io/secrets.js';
@@ -164,6 +164,42 @@ class AdministrateToken {
         } catch (error) {
           reject(error);
         }
+      });
+    });
+  }
+
+  nftTransfer(tokenSecrets, transfer_to, transfer_amount) {
+    return new Promise(async (resolve, reject) => {
+      inquirer.prompt([
+        {
+          type: 'input',
+          name: 'transfer_to',
+          message: "Insert the wallet ID of the receiver",
+          default: transfer_to
+        },
+        {
+          type: 'input',
+          name: 'transfer_amount',
+          message: "Insert the amount you want to transfer",
+          default: transfer_amount
+        }
+      ]).then(async (answers) => {
+          try {
+            const transaction = await new TransferTransaction()
+              .addNftTransfer(
+                AccountId.fromString(tokenSecrets.id.toString()),
+                1,
+                AccountId.fromString(tokenSecrets.treasury.accountId),
+                answers.transfer_to
+              )
+              .freezeWith(this.client);
+            const signTx = await transaction.sign(PrivateKey.fromString(tokenSecrets.treasury.privateKey.toString()));
+            const txResponse = await signTx.execute(this.client);
+            const receipt = await txResponse.getReceipt(this.client);
+            resolve(receipt.status.toString());
+          } catch(error) {
+            reject(new Error(`error while transfering NFT:  ${error.message}`));
+          }
       });
     });
   }

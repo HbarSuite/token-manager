@@ -123,6 +123,7 @@ class Token {
             let actions = [
               {name: 'Transfer HBAR (transfers HBAR from treasury into a given wallet)', value: 'transfer_hbar'},
               {name: 'Transfer Token (transfers the token from treasury into a given wallet)', value: 'transfer'},
+              {name: 'Transfer NFT (transfers the NFT from treasury into a given wallet)', value: 'nftTransfer'},
               {name: 'Withdraw Token (transfers the token from any account you own into a given wallet)', value: 'withdraw'},
               {name: 'Delete Token', value: 'delete'},
               {name: 'Mint a Token', value: 'mint'},
@@ -156,6 +157,9 @@ class Token {
                     break;                  
                   case 'transfer':
                     response = await this.administrateToken.transfer(tokenSecrets);
+                    break;
+                  case 'nftTransfer':
+                    response = await this.administrateToken.nftTransfer(tokenSecrets);
                     break;
                   case 'withdraw':
                     response = await this.administrateToken.withdraw(tokenSecrets);
