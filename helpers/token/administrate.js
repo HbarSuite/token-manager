@@ -181,7 +181,7 @@ class AdministrateToken {
         {
           type: 'input',
           name: 'transfer_amount',
-          message: "Insert the amount you want to transfer",
+          message: "Insert the serial number you want to transfer",
           default: transfer_amount
         }
       ]).then(async (answers) => {
@@ -189,7 +189,7 @@ class AdministrateToken {
           const transaction = await new TransferTransaction()
             .addNftTransfer(
               tokenSecrets.id,
-              1,
+              Number(answers.transfer_amount),
               tokenSecrets.treasury.accountId,
               answers.transfer_to
             )
