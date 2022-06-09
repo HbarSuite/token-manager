@@ -61,25 +61,25 @@ class Token {
               name: 'update_action',
               message: 'What do you want to update?',
               choices: ['token settings', 'token fees'],
-            }                       
+            }
           ]).then(async (answers) => {
             let tokenSecrets = secrets.find(secret => secret.id == answers.token_id);
-            
+
             try {
               let response = null;
 
-              switch(answers.update_action) {
+              switch (answers.update_action) {
                 case 'token settings':
                   response = await this.updateToken.updateSettings(tokenSecrets);
                   break;
                 case 'token fees':
                   response = await this.updateToken.updateFees(tokenSecrets);
-                  break;                  
+                  break;
               }
 
               resolve(response);
-               
-            } catch(error) {
+
+            } catch (error) {
               reject(error);
             }
           });
@@ -121,24 +121,25 @@ class Token {
             let tokenSecrets = secrets.find(secret => secret.id == token.id);
 
             let actions = [
-              {name: 'Transfer HBAR (transfers HBAR from treasury into a given wallet)', value: 'transfer_hbar'},
-              {name: 'Transfer Token (transfers the token from treasury into a given wallet)', value: 'transfer'},
-              {name: 'Withdraw Token (transfers the token from any account you own into a given wallet)', value: 'withdraw'},
-              {name: 'Delete Token', value: 'delete'},
-              {name: 'Mint a Token', value: 'mint'},
-              {name: 'Burn Token', value: 'burn'},
-              {name: 'Freeze an Account', value: 'freeze'},
-              {name: 'Unfreeze an Account', value: 'unfreeze'},
-              {name: 'Enable KYC Account Flag', value: 'enable_kyc'},
-              {name: 'Disable KYC Account Flag', value: 'disable_kyc'},
-              {name: 'Associate Token to Account', value: 'associate'},
-              {name: 'Disassociate Token to Account', value: 'disassociate'},
-              {name: 'Pause a Token', value: 'pause'},
-              {name: 'Unpause a Token', value: 'unpause'},
-              {name: 'Wipe a Token', value: 'wipe'},
-              {name: 'Swap a Token (get HBAR from a wallet to own and send tokens back from treasury)', value: 'swap'}
+              { name: 'Transfer HBAR (transfers HBAR from treasury into a given wallet)', value: 'transfer_hbar' },
+              { name: 'Transfer Token (transfers the token from treasury into a given wallet)', value: 'transfer' },
+              { name: 'Transfer NFT (transfers the NFT from treasury into a given wallet)', value: 'nftTransfer' },
+              { name: 'Withdraw Token (transfers the token from any account you own into a given wallet)', value: 'withdraw' },
+              { name: 'Delete Token', value: 'delete' },
+              { name: 'Mint a Token', value: 'mint' },
+              { name: 'Burn Token', value: 'burn' },
+              { name: 'Freeze an Account', value: 'freeze' },
+              { name: 'Unfreeze an Account', value: 'unfreeze' },
+              { name: 'Enable KYC Account Flag', value: 'enable_kyc' },
+              { name: 'Disable KYC Account Flag', value: 'disable_kyc' },
+              { name: 'Associate Token to Account', value: 'associate' },
+              { name: 'Disassociate Token to Account', value: 'disassociate' },
+              { name: 'Pause a Token', value: 'pause' },
+              { name: 'Unpause a Token', value: 'unpause' },
+              { name: 'Wipe a Token', value: 'wipe' },
+              { name: 'Swap a Token (get HBAR from a wallet to own and send tokens back from treasury)', value: 'swap' }
             ];
-            
+
             inquirer.prompt(
               {
                 type: 'list',
@@ -146,20 +147,23 @@ class Token {
                 message: `Which action do you want to execute on ${tokenSecrets.name}?`,
                 choices: actions
               }
-            ).then(async(answer) => {
+            ).then(async (answer) => {
               try {
                 let response = null;
 
-                switch(answer.action) {
+                switch (answer.action) {
                   case 'transfer_hbar':
                     response = await this.administrateToken.hbarTransfer(tokenSecrets);
-                    break;                  
+                    break;
                   case 'transfer':
                     response = await this.administrateToken.transfer(tokenSecrets);
                     break;
+                  case 'nftTransfer':
+                    response = await this.administrateToken.nftTransfer(tokenSecrets);
+                    break;
                   case 'withdraw':
                     response = await this.administrateToken.withdraw(tokenSecrets);
-                    break;                    
+                    break;
                   case 'delete':
                     response = await this.administrateToken.delete(tokenSecrets);
                     break;
@@ -174,7 +178,7 @@ class Token {
                     break;
                   case 'unfreeze':
                     response = await this.administrateToken.unfreeze(tokenSecrets);
-                    break;    
+                    break;
                   case 'enable_kyc':
                     response = await this.administrateToken.enableKyc(tokenSecrets);
                     break;
@@ -192,20 +196,20 @@ class Token {
                     break;
                   case 'unpause':
                     response = await this.administrateToken.unpause(tokenSecrets);
-                    break;          
+                    break;
                   case 'wipe':
                     response = await this.administrateToken.wipe(tokenSecrets);
                     break;
                   case 'swap':
                     response = await this.administrateToken.swap(tokenSecrets);
-                    break;                                                               
+                    break;
                 }
-  
-                resolve({action: answer.action, response: response});                
-              } catch(error) {
+
+                resolve({ action: answer.action, response: response });
+              } catch (error) {
                 reject(error);
               }
-            });            
+            });
           });
         } else {
           resolve("Sorry, no tokens available in the secrets file for the choosen environment.");

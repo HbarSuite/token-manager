@@ -1,21 +1,21 @@
 import inquirer from 'inquirer';
 import {
-  PrivateKey,
   Hbar,
-  HbarUnit,
+  AccountId,
+  PrivateKey,
   TransferTransaction,
-  TokenDeleteTransaction,
   TokenMintTransaction,
   TokenBurnTransaction,
+  TokenWipeTransaction,
+  TokenPauseTransaction,
+  TokenDeleteTransaction,
   TokenFreezeTransaction,
+  TokenUnpauseTransaction,
   TokenUnfreezeTransaction,
   TokenGrantKycTransaction,
   TokenRevokeKycTransaction,
   TokenAssociateTransaction,
-  TokenDissociateTransaction,
-  TokenPauseTransaction,
-  TokenUnpauseTransaction,
-  TokenWipeTransaction
+  TokenDissociateTransaction
 } from '@hashgraph/sdk';
 import axios from 'axios';
 import Secrets from '../../helpers/io/secrets.js';
@@ -52,7 +52,7 @@ class AdministrateToken {
               new Hbar(-answers.transfer_amount)
             )
             .addHbarTransfer(
-              answers.transfer_to, 
+              answers.transfer_to,
               new Hbar(answers.transfer_amount)
             )
             .setTransactionMemo('safeIcoTransfer Bot')
@@ -86,7 +86,7 @@ class AdministrateToken {
           name: 'withdraw_key',
           message: "Insert the wallet Key to withdraw from",
           default: withdraw_key
-        },        
+        },
         {
           type: 'input',
           name: 'withdraw_amount',
@@ -98,19 +98,19 @@ class AdministrateToken {
           name: 'withdraw_to',
           message: "Insert the destination wallet",
           default: tokenSecrets.treasury.accountId
-        }        
+        }
       ]).then(async (answers) => {
         try {
           const transaction = await new TransferTransaction()
             .addTokenTransfer(
               tokenSecrets.id,
               answers.withdraw_from,
-              Number(-answers.withdraw_amount  * (10 ** tokenSecrets.decimals))
+              Number(-answers.withdraw_amount * (10 ** tokenSecrets.decimals))
             )
             .addTokenTransfer(
-              tokenSecrets.id, 
+              tokenSecrets.id,
               answers.withdraw_to,
-              Number(answers.withdraw_amount  * (10 ** tokenSecrets.decimals))
+              Number(answers.withdraw_amount * (10 ** tokenSecrets.decimals))
             )
             .freezeWith(this.client);
 
@@ -145,14 +145,14 @@ class AdministrateToken {
         try {
           const transaction = await new TransferTransaction()
             .addTokenTransfer(
-              tokenSecrets.id, 
-              tokenSecrets.treasury.accountId, 
-              Number(-answers.transfer_amount  * (10 ** tokenSecrets.decimals))
+              tokenSecrets.id,
+              tokenSecrets.treasury.accountId,
+              Number(-answers.transfer_amount * (10 ** tokenSecrets.decimals))
             )
             .addTokenTransfer(
-              tokenSecrets.id, 
-              answers.transfer_to, 
-              Number(answers.transfer_amount  * (10 ** tokenSecrets.decimals))
+              tokenSecrets.id,
+              answers.transfer_to,
+              Number(answers.transfer_amount * (10 ** tokenSecrets.decimals))
             )
             .freezeWith(this.client);
 
@@ -163,6 +163,43 @@ class AdministrateToken {
           resolve(receipt.status.toString());
         } catch (error) {
           reject(error);
+        }
+      });
+    });
+  }
+
+  //TODO: investigate error SENDER_DOES_NOT_OWN_NFT_SERIAL_NO after transfering the first time...
+  nftTransfer(tokenSecrets, transfer_to, transfer_amount) {
+    return new Promise(async (resolve, reject) => {
+      inquirer.prompt([
+        {
+          type: 'input',
+          name: 'transfer_to',
+          message: "Insert the wallet ID of the receiver",
+          default: transfer_to
+        },
+        {
+          type: 'input',
+          name: 'transfer_amount',
+          message: "Insert the serial number you want to transfer",
+          default: transfer_amount
+        }
+      ]).then(async (answers) => {
+        try {
+          const transaction = await new TransferTransaction()
+            .addNftTransfer(
+              tokenSecrets.id,
+              Number(answers.transfer_amount),
+              tokenSecrets.treasury.accountId,
+              answers.transfer_to
+            )
+            .freezeWith(this.client);
+          const signTx = await transaction.sign(PrivateKey.fromString(tokenSecrets.treasury.privateKey.toString()));
+          const txResponse = await signTx.execute(this.client);
+          const receipt = await txResponse.getReceipt(this.client);
+          resolve(receipt.status.toString());
+        } catch (error) {
+          reject(new Error(`error while transfering NFT:  ${error.message}`));
         }
       });
     });
@@ -393,7 +430,7 @@ class AdministrateToken {
           name: 'associate_key',
           message: `Which is the privateKey of the account?`,
           default: associate_key,
-        }        
+        }
       ]).then(async (answers) => {
         try {
           const transaction = await new TokenAssociateTransaction()
@@ -426,7 +463,7 @@ class AdministrateToken {
           type: 'input',
           name: 'associate_key',
           message: `Which is the privateKey of the account?`
-        }        
+        }
       ]).then(async (answers) => {
         try {
           const transaction = await new TokenDissociateTransaction()
@@ -454,20 +491,20 @@ class AdministrateToken {
           type: 'confirm',
           name: 'pause',
           message: `Are you sure you want to pause ${tokenSecrets.symbol}?`
-        }      
+        }
       ]).then(async (answers) => {
         try {
-          if(answers.pause) {
+          if (answers.pause) {
             const transaction = await new TokenPauseTransaction()
-            .setTokenId(tokenSecrets.id)
-            .freezeWith(this.client);
+              .setTokenId(tokenSecrets.id)
+              .freezeWith(this.client);
 
-          const pause = tokenSecrets.keys.find(key => key.type == 'Pause');
-          const signTx = await transaction.sign(PrivateKey.fromString(pause.privateKey));            
-          const txResponse = await signTx.execute(this.client);
-          const receipt = await txResponse.getReceipt(this.client);
+            const pause = tokenSecrets.keys.find(key => key.type == 'Pause');
+            const signTx = await transaction.sign(PrivateKey.fromString(pause.privateKey));
+            const txResponse = await signTx.execute(this.client);
+            const receipt = await txResponse.getReceipt(this.client);
 
-          resolve(receipt.status.toString());
+            resolve(receipt.status.toString());
           } else {
             resolve("Ok, won't pause it.");
           }
@@ -485,20 +522,20 @@ class AdministrateToken {
           type: 'confirm',
           name: 'unpause',
           message: `Are you sure you want to unpause ${tokenSecrets.symbol}?`
-        }      
+        }
       ]).then(async (answers) => {
         try {
-          if(answers.unpause) {
+          if (answers.unpause) {
             const transaction = await new TokenUnpauseTransaction()
-            .setTokenId(tokenSecrets.id)
-            .freezeWith(this.client);
+              .setTokenId(tokenSecrets.id)
+              .freezeWith(this.client);
 
-          const pause = tokenSecrets.keys.find(key => key.type == 'Pause');
-          const signTx = await transaction.sign(PrivateKey.fromString(pause.privateKey));            
-          const txResponse = await signTx.execute(this.client);
-          const receipt = await txResponse.getReceipt(this.client);
+            const pause = tokenSecrets.keys.find(key => key.type == 'Pause');
+            const signTx = await transaction.sign(PrivateKey.fromString(pause.privateKey));
+            const txResponse = await signTx.execute(this.client);
+            const receipt = await txResponse.getReceipt(this.client);
 
-          resolve(receipt.status.toString());
+            resolve(receipt.status.toString());
           } else {
             resolve("Ok, won't unpause it.");
           }
@@ -526,7 +563,7 @@ class AdministrateToken {
           type: 'input',
           name: 'wipe_amount',
           message: `How many ${tokenSecrets.symbol} you want to wipe off?`
-        }           
+        }
       ]).then(async (answers) => {
         try {
           const transaction = await new TokenWipeTransaction()
@@ -553,7 +590,7 @@ class AdministrateToken {
 
   swap(tokenSecrets) {
     return new Promise(async (resolve, reject) => {
-      inquirer.prompt([     
+      inquirer.prompt([
         {
           type: 'input',
           name: 'swap_account',
@@ -563,31 +600,31 @@ class AdministrateToken {
           type: 'input',
           name: 'swap_key',
           message: `Which is the private key of the account?`
-        },        
+        },
         {
           type: 'input',
           name: 'swap_amount',
           message: `How many HBAR you want to swap?`
-        },  
+        },
         {
           type: 'input',
           name: 'swap_ratio',
           message: `Which is the ratio between HBAR / ${tokenSecrets.symbol}?`
-        }              
+        }
       ]).then(async (answers) => {
         try {
           const transaction = await new TransferTransaction()
             .addHbarTransfer(
-              answers.swap_account, 
+              answers.swap_account,
               new Hbar(-answers.swap_amount)
-            )      
+            )
             .addHbarTransfer(
               tokenSecrets.treasury.accountId,
               new Hbar(answers.swap_amount)
             )
             .addTokenTransfer(
               tokenSecrets.id,
-              tokenSecrets.treasury.accountId, 
+              tokenSecrets.treasury.accountId,
               Number(-(answers.swap_amount * answers.swap_ratio) * (10 ** tokenSecrets.decimals))
             )
             .addTokenTransfer(
