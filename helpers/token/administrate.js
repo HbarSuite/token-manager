@@ -188,9 +188,9 @@ class AdministrateToken {
         try {
           const transaction = await new TransferTransaction()
             .addNftTransfer(
-              AccountId.fromString(tokenSecrets.id.toString()),
+              tokenSecrets.id,
               1,
-              AccountId.fromString(tokenSecrets.treasury.accountId),
+              tokenSecrets.treasury.accountId,
               answers.transfer_to
             )
             .freezeWith(this.client);
