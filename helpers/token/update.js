@@ -8,7 +8,6 @@ import {
   CustomFractionalFee,
   CustomFixedFee,
   CustomRoyaltyFee,
-  Transaction,
   Hbar
 } from '@hashgraph/sdk';
 import Secrets from '../io/secrets.js';
@@ -85,7 +84,7 @@ class UpdateToken {
               switch (fee.fee_type) {
                 case 'fixed':
                   let customFixedFee = new CustomFixedFee()
-                  .setHbarAmount(Hbar.fromString(fee.fixed_amount))
+                    .setHbarAmount(Hbar.fromString(fee.fixed_amount))
                     // .setAmount(fee.fixed_amount)
                     // .setDenominatingTokenId(fee.fixed_token)
                     .setFeeCollectorAccountId(fee.fixed_collector);
@@ -207,7 +206,7 @@ class UpdateToken {
         // signing with the new treasury key, if any...
         if (settings.token_treasury_confirm) {
           signTx = await signTx.sign(PrivateKey.fromString(settings.treasury.privateKey));
-        }     
+        }
         // finally, executing the transaction...
         const txResponse = await signTx.execute(this.client);
         const receipt = await txResponse.getReceipt(this.client);
@@ -221,11 +220,11 @@ class UpdateToken {
 
   customFees(tokenType, fees, limit) {
     return new Promise(async (resolve) => {
-      let feesTypes = ['none', 'fixed', 'fractional'];
+      let feesTypes = ['none', 'fixed', 'fractional', 'royalty'];
 
-      if (tokenType == TokenType.NonFungibleUnique.toString()) {
-        feesTypes.push('royalty');
-      }
+      //if (tokenType == TokenType.NonFungibleUnique) {
+      //feesTypes.push('royalty');
+      //}
 
       inquirer.prompt([
         {
@@ -372,14 +371,14 @@ class UpdateToken {
         }
       ];
 
-      inquirer.prompt(questions).then(async(answers) => {
+      inquirer.prompt(questions).then(async (answers) => {
         let treasury = null;
 
-        if(answers.token_treasury_confirm) {
+        if (answers.token_treasury_confirm) {
           treasury = await this.accountAPI.create();
         }
 
-        resolve({...answers, treasury});
+        resolve({ ...answers, treasury });
       });
     });
   }
@@ -440,7 +439,7 @@ class UpdateToken {
           },
         ])
         .then((answers) => {
-          if(answers.keys_confirm) {
+          if (answers.keys_confirm) {
             let keys = [];
 
             answers.keys.forEach(async (type) => {
@@ -452,7 +451,7 @@ class UpdateToken {
                 publicKey: privateKey.publicKey.toString(),
               })
             });
-  
+
             resolve(keys);
           } else {
             resolve([]);

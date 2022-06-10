@@ -1,5 +1,6 @@
 import inquirer from 'inquirer';
 import {
+  Hbar,
   PrivateKey,
   PublicKey,
   TokenType,
@@ -129,7 +130,7 @@ class CreateToken {
                 .setNumerator(fee.royalty_numerator)
                 .setDenominator(fee.royalty_denominator)
                 .setFeeCollectorAccountId(fee.royalty_collector)
-                .setFallbackFee(new CustomFixedFee().setHbarAmount(new Hbar(fee.royalty_fallback)));
+                .setFallbackFee(new CustomFixedFee().setHbarAmount(new Hbar(Number(fee.royalty_fallback.toString()))));
 
               customFees.push(customRoyaltyFee);
               break;
@@ -179,7 +180,7 @@ class CreateToken {
     return new Promise(async (resolve) => {
       let feesTypes = ['none', 'fixed', 'fractional'];
 
-      if (tokenType == TokenType.NonFungibleUnique.toString()) {
+      if (tokenType == TokenType.NonFungibleUnique) {
         feesTypes.push('royalty');
       }
 
@@ -256,7 +257,7 @@ class CreateToken {
         {
           type: 'confirm',
           name: 'quit',
-          message: 'are you sure you?',
+          message: 'are you sure?',
           when: (answers) => answers.fee_type === 'none',
           default: true,
         },
