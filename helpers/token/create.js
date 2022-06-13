@@ -1,5 +1,6 @@
 import inquirer from 'inquirer';
 import {
+  Hbar,
   PrivateKey,
   PublicKey,
   TokenType,
@@ -179,7 +180,7 @@ class CreateToken {
     return new Promise(async (resolve) => {
       let feesTypes = ['none', 'fixed', 'fractional'];
 
-      if (tokenType == TokenType.NonFungibleUnique.toString()) {
+      if (tokenType == TokenType.NonFungibleUnique) {
         feesTypes.push('royalty');
       }
 
